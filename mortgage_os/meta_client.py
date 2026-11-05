@@ -16,8 +16,9 @@ import json
 import os
 import urllib.request
 
-BASE_URL = "https://api.meta.ai/v1"
-DEFAULT_MODEL = "muse-spark-1.3"
+BASE_URL = os.environ.get("MODEL_API_BASE", "https://api.meta.ai/v1")
+# Override with MODEL_ID=... ; resolve_model() checks it against /v1/models.
+DEFAULT_MODEL = os.environ.get("MODEL_ID", "muse-spark-1.3")
 
 # Reported launch pricing for Muse Spark 1.3 (USD per 1M tokens).
 # Used only for the informational cost tally in burn.py.
@@ -48,6 +49,35 @@ class MetaClient:
     @property
     def demo_mode(self) -> bool:
         return not self.api_key
+
+    def list_models(self) -> list[str]:
+        """Return model IDs available to this key (live mode only)."""
+        if self.demo_mode:
+            return []
+        req = urllib.request.Request(
+            f"{BASE_URL}/models",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        return [m.get("id", "") for m in body.get("data", [])]
+
+    def resolve_model(self) -> str:
+        """Verify self.model exists; otherwise fall back to the newest
+        muse-spark model the key can see. Returns the model actually used."""
+        if self.demo_mode:
+            return self.model
+        try:
+            ids = self.list_models()
+        except Exception:
+            return self.model
+        if self.model in ids or not ids:
+            return self.model
+        sparks = [i for i in ids if i.startswith("muse-spark")]
+        pick = sparks[0] if sparks else ids[0]
+        print(f"[meta_client] model '{self.model}' not available; using '{pick}'")
+        self.model = pick
+        return pick
 
     def complete(self, system: str, user: str, max_tokens: int = 900) -> dict:
         """Return {"text": str, "usage": {...}, "mode": "live"|"demo"}."""

@@ -38,6 +38,7 @@ def main() -> int:
     args = parser.parse_args()
 
     client = MetaClient()
+    client.resolve_model()
     if client.demo_mode:
         print(
             "ERROR: MODEL_API_KEY is not set. burn.py only runs live — "

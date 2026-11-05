@@ -36,6 +36,7 @@ def load_book(folder: Path) -> list[dict]:
 def cmd_analyze(args: argparse.Namespace) -> int:
     scenario = load_scenario(Path(args.scenario))
     client = MetaClient()
+    client.resolve_model()
     brief = analyze_scenario(scenario, client)
     print(json.dumps(brief, indent=2))
     if brief["mode"] == "demo":

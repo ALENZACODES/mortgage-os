@@ -61,6 +61,7 @@ def compare_offers(scenario: dict) -> dict:
 
 def analyze_scenario(scenario: dict, client: MetaClient | None = None) -> dict:
     client = client or MetaClient()
+    client.resolve_model()
     penalty = estimate_penalty(scenario)
     offers = compare_offers(scenario)
 
