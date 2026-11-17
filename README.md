@@ -82,7 +82,7 @@ advice.
 ## Project structure
 
 ```text
-mortgage-os-meta/
+mortgage-os/
 ├── demo/                     # Demo video
 │   └── mortgage-os-demo.mp4
 ├── mortgage_os/              # Core package
